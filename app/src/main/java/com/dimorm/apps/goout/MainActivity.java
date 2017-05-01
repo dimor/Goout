@@ -2,6 +2,8 @@ package com.dimorm.apps.goout;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.Service;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,10 +17,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
@@ -48,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     ProgressBar LoadingGpsProgress;
     boolean internetConnection;
     ConnectionCheck connectionCheck;
+    boolean autoSearch ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +95,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
 
 
     }
@@ -149,11 +158,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         Toast.makeText(MainActivity.this, "No GPS Connection", Toast.LENGTH_SHORT).show();
                     } else {
                         if(query.length() > 0){
+                            autoSearch=false;
                         Request_Result_Fragmnet listFragment = new Request_Result_Fragmnet();
                         args.putString("query_string", query);
                         args.putDouble("lat", lat);
                         args.putDouble("lng", lng);
                         args.putBoolean("currentLocation", currentLocation);
+                        args.putBoolean("auto", autoSearch);
                         listFragment.setArguments(args);
                         getFragmentManager().beginTransaction().addToBackStack("list").replace(R.id.LinearContainer, listFragment).commit();
                             LoadingGpsTV.setVisibility(View.GONE);
@@ -207,10 +218,35 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         lat = location.getLatitude();
         lng = location.getLongitude();
         if (lat > 0 & lng > 0) {
+            openAutoSearchFragment();
             LoadingGpsTV.setVisibility(View.GONE);
             LoadingGpsProgress.setVisibility(View.GONE);
             latLngMyLocation = new LatLng(lat, lng);
             Log.d("Location Detected: ", location.getLatitude() + "\n " + location.getLongitude());
+
+
+
+
+
+
+
+
+        }
+
+    }
+
+    private void openAutoSearchFragment() {
+
+        Request_Result_Fragmnet listFragment = (Request_Result_Fragmnet)getFragmentManager().findFragmentByTag("autoRun");
+
+        if (listFragment == null) {
+            listFragment = new Request_Result_Fragmnet();
+            autoSearch=true;
+            args.putDouble("lat", lat);
+            args.putDouble("lng", lng);
+            args.putBoolean("auto", autoSearch);
+            listFragment.setArguments(args);
+            getFragmentManager().beginTransaction().addToBackStack("list").replace(R.id.LinearContainer, listFragment,"autoRun").commit();
         }
 
     }
@@ -234,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     //////////////////////////////////////////////////////CHANGE TO MAP FRAGMNET INTERFACE///////////////////////
     @Override
-    public void ChangeFragment(LatLng latLng) {
+    public void ChangeFragment(final LatLng latLng) {
         final LatLng disLocation = latLng;
         MapFragment mapFragment = new MapFragment();
         getFragmentManager().beginTransaction().addToBackStack("map Frag").replace(R.id.LinearContainer, mapFragment).commit();
@@ -249,6 +285,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         .position(disLocation)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 
+                if(latLngMyLocation!=null)
                 googleMap.addMarker(new MarkerOptions()
                         .position(latLngMyLocation)
                         .title("My Location")
@@ -286,15 +323,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         super.onResume();
     }
 
-    @Override
+
+
+
+
+    @Override //TODO // FIXME: 5/1/2017
     public void onBackPressed() {
 
         int count = getFragmentManager().getBackStackEntryCount();
 
-        if (count == 0) {
+        if (count == 1) {
+
+            Toast.makeText(this, "To Exit Press Back One More Time", Toast.LENGTH_SHORT).show();
+        }
+        else if(count ==0)
             super.onBackPressed();
             //additional code
-        } else {
+        else {
             getFragmentManager().popBackStack();
         }
 

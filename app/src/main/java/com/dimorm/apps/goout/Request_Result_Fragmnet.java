@@ -7,10 +7,15 @@ import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -31,11 +36,14 @@ public class Request_Result_Fragmnet extends Fragment {
     RecyclerView recyclerView;
     String SearchData;
     Context context;
+    boolean autoSearch;
     boolean currentLocation;
     ProgressBar progressBar;
     public Request_Result_Fragmnet() {
         // Required empty public constructor
     }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -72,17 +80,21 @@ public class Request_Result_Fragmnet extends Fragment {
 
 
         Bundle data = getArguments();
-
         SearchData = data.getString("query_string");
         lat = data.getDouble("lat");
         lng = data.getDouble("lng");
-        Log.d("@@@@@@@@@@@Search call", SearchData);
-        currentLocation =data.getBoolean("currentLocation");
-
-        if (currentLocation)
-            new netCall().execute("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=2000&keyword="+SearchData+"&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY");
-        else
-            new netCall().execute("https://maps.googleapis.com/maps/api/place/textsearch/json?query="+SearchData+"&radius=2000&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY");
+        autoSearch = data.getBoolean("auto");
+        currentLocation = data.getBoolean("currentLocation");
+        if (autoSearch){
+            new netCall().execute("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=2000&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY");
+            autoSearch=false;
+        }
+        else{
+            if (currentLocation)
+                new netCall().execute("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=2000&keyword="+SearchData+"&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY");
+            else
+                new netCall().execute("https://maps.googleapis.com/maps/api/place/textsearch/json?query="+SearchData+"&radius=2000&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY");
+        }
 
         return resultFragmentView;
     }
@@ -115,9 +127,6 @@ public class Request_Result_Fragmnet extends Fragment {
 
             adapter = new CurrentLocationAdapter(gsonMainObject.results, lat, lng, currentLocation , context);
             recyclerView.setAdapter(adapter);
-
-
-
         }
 
 
