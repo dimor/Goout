@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         /////////////////////////////////////VARIABLES//////////////////////////////////////////
+        DatabaseSQL databaseSQL = new DatabaseSQL(this);
         args = new Bundle();
         LoadingGpsTV = (TextView) findViewById(R.id.LoadingGps);
         LoadingGpsProgress = (ProgressBar) findViewById(R.id.progressBarGPS);
@@ -188,8 +189,21 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-
-        return true;
+        switch (item.getItemId()){
+            case R.id.fav:
+                FavFragment favFragment = new FavFragment();
+                Bundle data = new Bundle();
+                data.putDouble("lat" , lat);
+                data.putDouble("lng" , lng);
+                favFragment.setArguments(data);
+                getFragmentManager().beginTransaction().addToBackStack("fav").replace(R.id.mainContainer,favFragment).commit();
+                Toast.makeText(this, "CLICKED", Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     //////////////////////////////////////ALERT DIALOG NO GPS///////////////////////////////////////////////////////////
@@ -273,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void ChangeFragment(final LatLng latLng) {
         final LatLng disLocation = latLng;
         MapFragment mapFragment = new MapFragment();
-        getFragmentManager().beginTransaction().addToBackStack("map Frag").replace(R.id.LinearContainer, mapFragment).commit();
+        getFragmentManager().beginTransaction().addToBackStack("map Frag").replace(R.id.mainContainer, mapFragment).commit();
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
@@ -331,12 +345,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onBackPressed() {
 
         int count = getFragmentManager().getBackStackEntryCount();
-
-        if (count == 1) {
-
-            Toast.makeText(this, "To Exit Press Back One More Time", Toast.LENGTH_SHORT).show();
-        }
-        else if(count ==0)
+        if(count ==0)
             super.onBackPressed();
             //additional code
         else {

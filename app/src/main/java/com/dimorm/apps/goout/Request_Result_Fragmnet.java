@@ -125,7 +125,10 @@ public class Request_Result_Fragmnet extends Fragment {
             Gson gson = new Gson();
             GsonModel gsonMainObject = gson.fromJson(JsonString, GsonModel.class);
 
+
             adapter = new CurrentLocationAdapter(gsonMainObject.results, lat, lng, currentLocation , context);
+
+
             recyclerView.setAdapter(adapter);
         }
 

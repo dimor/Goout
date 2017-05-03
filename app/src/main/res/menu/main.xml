@@ -17,10 +17,6 @@
         app:showAsAction="always"
         app:actionLayout="@layout/use_toggle"/>
 
-
-
-
-
     <item
         android:id="@+id/fav"
         android:checkable="true"

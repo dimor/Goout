@@ -1,7 +1,11 @@
 package com.dimorm.apps.goout;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -14,7 +18,9 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -30,13 +36,16 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
     String address;
     Context context;
     boolean currentLocation;
-
+    DatabaseSQL databaseSQL;
+    String pictureUrl;
+    Bitmap logoBitmap;
     public CurrentLocationAdapter(ArrayList<ResultsCurrentPlacesJsonModel> results, double lat, double lng, Boolean currentLocation, Context context) {
         this.results = results;
         this.lat = lat;
         this.lng = lng;
         this.currentLocation = currentLocation;
         this.context = context;
+         pictureUrl = null;
 
     }
 
@@ -45,7 +54,8 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
 
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.place_item, parent, false);
-        ViewHolder viewHolder = new ViewHolder(v, results, context, lat, lng);
+        databaseSQL = new DatabaseSQL(context);
+        ViewHolder viewHolder = new ViewHolder(v, results, context, lat, lng ,databaseSQL);
         return viewHolder;
     }
 
@@ -53,23 +63,29 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
     public void onBindViewHolder(ViewHolder holder, final int position) {
 
         name = results.get(position).name;
-        if (currentLocation) {
+        if (results.get(position).vicinity != null) {
             address = results.get(position).vicinity;
         } else {
             address = results.get(position).formatted_address;
         }
-        String pictureUrl = null;
+
         String dis = String.valueOf(DistanceCalculation.distance(lat, lng, results.get(position).geometry.location.lat, results.get(position).geometry.location.lng));
 
 
-        if (results.get(position).photos == null) {
-            pictureUrl = results.get(position).reference;
-        } else
-            pictureUrl = results.get(position).photos.get(0).photo_reference;
 
-        holder.bindText(name, address, pictureUrl, dis);
+        holder.bindText(name, address, getPictureURL(position), dis);
 
     }
+
+
+        public String getPictureURL(int position){
+            if (results.get(position).photos == null) {
+                pictureUrl = results.get(position).reference;
+            } else
+                pictureUrl = results.get(position).photos.get(0).photo_reference;
+
+            return pictureUrl;
+        }
 
     @Override
     public int getItemCount() {
@@ -83,11 +99,18 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
         ImageView logo = (ImageView) itemView.findViewById(R.id.ImageViewLogo);
         TextView distance = (TextView) itemView.findViewById(R.id.TextViewDistance);
         Context context;
+        DatabaseSQL databaseSQL;
+        Bitmap logoBitmap;
         ArrayList<ResultsCurrentPlacesJsonModel> results;
-        public ViewHolder(final View itemView, final ArrayList<ResultsCurrentPlacesJsonModel> results, final Context context, final double lat, final double lng) {
+        String pictureUrl;
+
+
+        public ViewHolder(final View itemView, final ArrayList<ResultsCurrentPlacesJsonModel> results, final Context context, final double lat, final double lng, DatabaseSQL databaseSQL) {
             super(itemView);
             this.context = context;
             this.results = results;
+            this.databaseSQL = databaseSQL;
+
             itemView.setOnCreateContextMenuListener(mOnCreateContextMenuListener);
 
 
@@ -115,7 +138,8 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
                     .into(logo);
         }
 
-            private final View.OnCreateContextMenuListener mOnCreateContextMenuListener = new View.OnCreateContextMenuListener() {
+
+        private final View.OnCreateContextMenuListener mOnCreateContextMenuListener = new View.OnCreateContextMenuListener() {
                 @Override
                 public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
                     menu.setHeaderTitle("Select The Action");
@@ -145,16 +169,31 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
 
                     if(item.getItemId()==2){
                         Log.d("CONTEXT", "onMenuItemClick: FAV " + getAdapterPosition());
+                        ContentValues values = new ContentValues();
+                        values.put("name",results.get(getAdapterPosition()).name);
+                        if (results.get(getAdapterPosition()).vicinity != null )
+                            values.put( "address",results.get(getAdapterPosition()).vicinity);
+                        else{
+                            values.put( "address",results.get(getAdapterPosition()).formatted_address);
+                        }
+
+                        values.put("lat",results.get(getAdapterPosition()).geometry.location.lat);
+                        values.put("lng",results.get(getAdapterPosition()).geometry.location.lng);
 
 
 
+                        BitmapDrawable drawable = (BitmapDrawable) logo.getDrawable();
+                        Bitmap bitmap = drawable.getBitmap();
 
+                        String imageString = ImageEncodeDecode.encodeToBase64(bitmap, Bitmap.CompressFormat.JPEG,100);
 
-
+                        values.put("imageString",imageString);
+                        databaseSQL.getWritableDatabase().insert("favorites",null ,values);
 
                     }
                     return true;
                 }
             };
-    }
         }
+
+    }
