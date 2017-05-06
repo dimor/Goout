@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -18,17 +17,17 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.RequestCreator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
  * Created by Dima on 4/21/2017.
  */
 
-public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocationAdapter.ViewHolder> {
+public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapter.ViewHolder> {
 
+
+    ///////////////////////Variables/////////////////////////////////////
     ArrayList<ResultsCurrentPlacesJsonModel> results;
     private double lat, lng;
     String searchData;
@@ -39,16 +38,22 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
     DatabaseSQL databaseSQL;
     String pictureUrl;
     Bitmap logoBitmap;
-    public CurrentLocationAdapter(ArrayList<ResultsCurrentPlacesJsonModel> results, double lat, double lng, Boolean currentLocation, Context context) {
+    String dis;
+
+    ////////////////////////////////////////Constractor////////////////////////////////
+    public DataFromJsonAdapter(ArrayList<ResultsCurrentPlacesJsonModel> results, double lat, double lng, Boolean currentLocation, Context context, String searchData) {
         this.results = results;
         this.lat = lat;
         this.lng = lng;
         this.currentLocation = currentLocation;
         this.context = context;
          pictureUrl = null;
-
+        this.searchData =searchData;
     }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+  ////////////////////////////////////////////VIEW HOLDER CREATE///////////////////////////////////
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
@@ -58,9 +63,9 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
         ViewHolder viewHolder = new ViewHolder(v, results, context, lat, lng ,databaseSQL);
         return viewHolder;
     }
-
+/////////////////////////////////////////////////BIND VIEW HOLDER/////////////////////////////////
     @Override
-    public void onBindViewHolder(ViewHolder holder, final int position) {
+    public void onBindViewHolder(ViewHolder holder, int position) {
 
         name = results.get(position).name;
         if (results.get(position).vicinity != null) {
@@ -69,12 +74,13 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
             address = results.get(position).formatted_address;
         }
 
-        String dis = String.valueOf(DistanceCalculation.distance(lat, lng, results.get(position).geometry.location.lat, results.get(position).geometry.location.lng));
+        dis = String.valueOf(DistanceCalculation.distance(lat, lng, results.get(position).geometry.location.lat, results.get(position).geometry.location.lng));
 
 
 
         holder.bindText(name, address, getPictureURL(position), dis);
-
+        if(searchData!=null)
+        holder.writeToHistory(databaseSQL,position);
     }
 
 
@@ -86,13 +92,13 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
 
             return pictureUrl;
         }
-
+//////////////////////////////////////////////////////////////GET COUNT ///////////////////////////////////////
     @Override
     public int getItemCount() {
         return results.size();
     }
 
-
+/////////////////////////////////////////////////////VIEW HOLDER INNER CLASS////////////////////////////////////
     public static class ViewHolder extends RecyclerView.ViewHolder  {
         TextView nameTV = (TextView) itemView.findViewById(R.id.TextViewPlaceName);
         TextView addressTV = (TextView) itemView.findViewById(R.id.TextViewAdress);
@@ -101,20 +107,23 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
         Context context;
         DatabaseSQL databaseSQL;
         Bitmap logoBitmap;
+        BitmapDrawable logoBitmapDrawable;
         ArrayList<ResultsCurrentPlacesJsonModel> results;
-        String pictureUrl;
+        String imageString;
 
-
+            ////////////////////////////////////////////////////CONSTRUCTOR/////////////////////////////////////////////////
         public ViewHolder(final View itemView, final ArrayList<ResultsCurrentPlacesJsonModel> results, final Context context, final double lat, final double lng, DatabaseSQL databaseSQL) {
             super(itemView);
             this.context = context;
             this.results = results;
             this.databaseSQL = databaseSQL;
-
             itemView.setOnCreateContextMenuListener(mOnCreateContextMenuListener);
 
 
 
+
+
+      ////////////////////////////////////////////CHANGE TO MAP FRAGMNET//////////////////////////////////
             logo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -129,27 +138,57 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
         }
 
 
-        public void bindText(String name, String address, String pictureUrl, String dis) {
-            nameTV.setText(name);
-            addressTV.setText(address);
-            distance.setText(dis);
-            Picasso.with(itemView.getContext())
-                    .load("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=" + pictureUrl + "&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY")
-                    .into(logo);
+   /////////////////////////////////WRITE TO HISTORY FUNCTION//////////////////////////////
+
+        public void writeToHistory(DatabaseSQL databaseSQL, int position) {
+            ContentValues values = new ContentValues();
+            values.put("name", results.get(position).name);
+            if (results.get(position).vicinity != null)
+                values.put("address", results.get(position).vicinity);
+            else {
+                values.put("address", results.get(position).formatted_address);
+            }
+            values.put("lat", results.get(position).geometry.location.lat);
+            values.put("lng", results.get(position).geometry.location.lng);
+
+
+          //  if (logo.getDrawable() == null)
+            logo.setImageResource(R.drawable.place);
+
+            logoBitmapDrawable = (BitmapDrawable) logo.getDrawable();
+            logoBitmap = logoBitmapDrawable.getBitmap();
+
+            imageString = ImageEncodeDecode.encodeToBase64(logoBitmap, Bitmap.CompressFormat.JPEG, 100);
+
+            values.put("imageString", imageString);
+            databaseSQL.getWritableDatabase().insert("history", null, values);
         }
 
 
-        private final View.OnCreateContextMenuListener mOnCreateContextMenuListener = new View.OnCreateContextMenuListener() {
-                @Override
-                public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                    menu.setHeaderTitle("Select The Action");
-                    MenuItem shareAction = menu.add(0,1,1,"Share");
-                    MenuItem saveToFavAction = menu.add(0,2,2,"Add to Favorites");
-                    shareAction.setOnMenuItemClickListener(mOnMyActionClickListener);
-                    saveToFavAction.setOnMenuItemClickListener(mOnMyActionClickListener);
 
+
+        //////////////////////////BIND DATA TO VIEWS/////////////////////////////////
+                public void bindText(String name, String address, String pictureUrl, String dis) {
+                    nameTV.setText(name);
+                    addressTV.setText(address);
+                    distance.setText(dis);
+                    Picasso.with(itemView.getContext())
+                            .load("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=" + pictureUrl + "&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY")
+                            .into(logo);
                 }
-            };
+
+        //////////////////////////////////////////////////////CONTEXT MENU//////////////////////////////////////////////////////////////
+                private final View.OnCreateContextMenuListener mOnCreateContextMenuListener = new View.OnCreateContextMenuListener() {
+                        @Override
+                        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                            menu.setHeaderTitle("Select The Action");
+                            MenuItem shareAction = menu.add(0,1,1,"Share");
+                            MenuItem saveToFavAction = menu.add(0,2,2,"Add to Favorites");
+                            shareAction.setOnMenuItemClickListener(mOnMyActionClickListener);
+                            saveToFavAction.setOnMenuItemClickListener(mOnMyActionClickListener);
+
+                        }
+                    };
 
             private final MenuItem.OnMenuItemClickListener mOnMyActionClickListener = new MenuItem.OnMenuItemClickListener() {
                 @Override
@@ -194,6 +233,13 @@ public class CurrentLocationAdapter extends RecyclerView.Adapter<CurrentLocation
                     return true;
                 }
             };
+
+
+
+
+
+
+
         }
 
     }

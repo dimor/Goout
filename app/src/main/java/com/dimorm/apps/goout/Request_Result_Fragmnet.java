@@ -6,15 +6,10 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -32,13 +27,14 @@ public class Request_Result_Fragmnet extends Fragment {
 
     double lng, lat;
 
-    CurrentLocationAdapter adapter;
+    DataFromJsonAdapter adapter;
     RecyclerView recyclerView;
     String SearchData;
     Context context;
     boolean autoSearch;
     boolean currentLocation;
     ProgressBar progressBar;
+    DatabaseSQL databaseSQL;
     public Request_Result_Fragmnet() {
         // Required empty public constructor
     }
@@ -52,33 +48,11 @@ public class Request_Result_Fragmnet extends Fragment {
         View resultFragmentView = inflater.inflate(R.layout.fragment_request_result, container, false);
         progressBar = (ProgressBar) resultFragmentView.findViewById(R.id.progressBar);
         recyclerView = (RecyclerView) resultFragmentView.findViewById(R.id.RecycleViewList);
+        databaseSQL = new DatabaseSQL(getActivity());
         progressBar.setVisibility(ProgressBar.VISIBLE);
         recyclerView.setVisibility(RecyclerView.INVISIBLE);
         context = getActivity().getBaseContext();
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         Bundle data = getArguments();
         SearchData = data.getString("query_string");
         lat = data.getDouble("lat");
@@ -111,25 +85,35 @@ public class Request_Result_Fragmnet extends Fragment {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+
+            try {
+                databaseSQL.getWritableDatabase().delete("history", null, null);
+            }catch (Exception x)
+            {
+                x.fillInStackTrace();
+            }
+
             return response;
         }
 
         @Override
         protected void onPostExecute(String JsonString) {
 
-
             progressBar.setVisibility(ProgressBar.GONE);
             recyclerView.setVisibility(RecyclerView.VISIBLE);
-
            // Log.d("@@@@@@@@@@@ received ", JsonString);
             Gson gson = new Gson();
             GsonModel gsonMainObject = gson.fromJson(JsonString, GsonModel.class);
+            try{
+                adapter = new DataFromJsonAdapter(gsonMainObject.results, lat, lng, currentLocation , context ,SearchData);
+                recyclerView.setAdapter(adapter);
+            }catch (Exception x){
+                x.printStackTrace();
+                Toast.makeText(context, "Something went wrong , please try again later", Toast.LENGTH_SHORT).show();
 
+            }
 
-            adapter = new CurrentLocationAdapter(gsonMainObject.results, lat, lng, currentLocation , context);
-
-
-            recyclerView.setAdapter(adapter);
         }
 
 

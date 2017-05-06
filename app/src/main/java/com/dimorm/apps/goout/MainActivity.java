@@ -5,12 +5,18 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -51,13 +57,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     TextView LoadingGpsTV;
     ProgressBar LoadingGpsProgress;
     boolean internetConnection;
-    ConnectionCheck connectionCheck;
-    boolean autoSearch ;
+    boolean autoSearch;
+    static boolean DISTANCE_IN_KM;
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        DISTANCE_IN_KM = preferences.getBoolean("switch_dis",true);
+
         /////////////////////////////////////VARIABLES//////////////////////////////////////////
         DatabaseSQL databaseSQL = new DatabaseSQL(this);
         args = new Bundle();
@@ -75,8 +86,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
 
         //////////////////////////////////////////CHECK FOR INTERNER///////////////////////////////////////
-         connectionCheck = new ConnectionCheck(this);
-        if (!connectionCheck.isNetworkAvailable()) {
+        if (!InternetConnection.checkConnection(this)) {
+            HistoryFragment historyFragment = new HistoryFragment();
+            Bundle data = new Bundle();
+            data.putDouble("lat",lat);
+            data.getDouble("lng",lng);
+            historyFragment.setArguments(data);
+            getFragmentManager().beginTransaction().addToBackStack("history").replace(R.id.mainContainer,historyFragment).commit();
             Toast.makeText(this, "No Internet Connection ", Toast.LENGTH_SHORT).show();
         }
 
@@ -96,10 +112,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
 
 
     }
@@ -151,29 +163,30 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             public boolean onQueryTextSubmit(String query) {
 
 
-                if (!connectionCheck.isNetworkAvailable()) {
+                if (!InternetConnection.checkConnection(MainActivity.this)) {
                     Toast.makeText(MainActivity.this, "Please Check Your Internet Connection", Toast.LENGTH_SHORT).show();
                 } else {
 
                     if (currentLocation & lat == 0 & lng == 0) {
                         Toast.makeText(MainActivity.this, "No GPS Connection", Toast.LENGTH_SHORT).show();
                     } else {
-                        if(query.length() > 0){
-                            autoSearch=false;
-                        Request_Result_Fragmnet listFragment = new Request_Result_Fragmnet();
-                        args.putString("query_string", query);
-                        args.putDouble("lat", lat);
-                        args.putDouble("lng", lng);
-                        args.putBoolean("currentLocation", currentLocation);
-                        args.putBoolean("auto", autoSearch);
-                        listFragment.setArguments(args);
-                        getFragmentManager().beginTransaction().addToBackStack("list").replace(R.id.LinearContainer, listFragment).commit();
+                        if (query.length() > 0) {
+                            autoSearch = false;
+                            Request_Result_Fragmnet listFragment = new Request_Result_Fragmnet();
+                            args.putString("query_string", query);
+                            args.putDouble("lat", lat);
+                            args.putDouble("lng", lng);
+                            args.putBoolean("currentLocation", currentLocation);
+                            args.putBoolean("auto", autoSearch);
+                            listFragment.setArguments(args);
+                            getFragmentManager().beginTransaction().addToBackStack("list").replace(R.id.LinearContainer, listFragment).commit();
                             LoadingGpsTV.setVisibility(View.GONE);
                             LoadingGpsProgress.setVisibility(View.GONE);
-                          }}
-                  }
-                     return true;
-                 }
+                        }
+                    }
+                }
+                return true;
+            }
 
             @Override
             public boolean onQueryTextChange(String newText) {
@@ -189,15 +202,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.fav:
                 FavFragment favFragment = new FavFragment();
                 Bundle data = new Bundle();
-                data.putDouble("lat" , lat);
-                data.putDouble("lng" , lng);
+                data.putDouble("lat", lat);
+                data.putDouble("lng", lng);
                 favFragment.setArguments(data);
-                getFragmentManager().beginTransaction().addToBackStack("fav").replace(R.id.mainContainer,favFragment).commit();
+                getFragmentManager().beginTransaction().addToBackStack("fav").replace(R.id.mainContainer, favFragment).commit();
                 Toast.makeText(this, "CLICKED", Toast.LENGTH_SHORT).show();
+                return true;
+
+            case R.id.settings_preference:
+                Intent intent = new Intent(this, MySettings.class);
+                startActivity(intent);
                 return true;
             default:
                 // If we got here, the user's action was not recognized.
@@ -231,36 +249,29 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onLocationChanged(Location location) {
         lat = location.getLatitude();
         lng = location.getLongitude();
-        if (lat > 0 & lng > 0) {
+        if (lat > 0 & lng > 0 & InternetConnection.checkConnection(this)) {
             openAutoSearchFragment();
             LoadingGpsTV.setVisibility(View.GONE);
             LoadingGpsProgress.setVisibility(View.GONE);
             latLngMyLocation = new LatLng(lat, lng);
             Log.d("Location Detected: ", location.getLatitude() + "\n " + location.getLongitude());
-
-
-
-
-
-
-
-
         }
+
 
     }
 
     private void openAutoSearchFragment() {
 
-        Request_Result_Fragmnet listFragment = (Request_Result_Fragmnet)getFragmentManager().findFragmentByTag("autoRun");
+        Request_Result_Fragmnet listFragment = (Request_Result_Fragmnet) getFragmentManager().findFragmentByTag("autoRun");
 
         if (listFragment == null) {
             listFragment = new Request_Result_Fragmnet();
-            autoSearch=true;
+            autoSearch = true;
             args.putDouble("lat", lat);
             args.putDouble("lng", lng);
             args.putBoolean("auto", autoSearch);
             listFragment.setArguments(args);
-            getFragmentManager().beginTransaction().addToBackStack("list").replace(R.id.LinearContainer, listFragment,"autoRun").commit();
+            getFragmentManager().beginTransaction().addToBackStack("list").replace(R.id.LinearContainer, listFragment, "autoRun").commit();
         }
 
     }
@@ -299,11 +310,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         .position(disLocation)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 
-                if(latLngMyLocation!=null)
-                googleMap.addMarker(new MarkerOptions()
-                        .position(latLngMyLocation)
-                        .title("My Location")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                if (latLngMyLocation != null)
+                    googleMap.addMarker(new MarkerOptions()
+                            .position(latLngMyLocation)
+                            .title("My Location")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
                 googleMap.moveCamera(update);
             }
@@ -333,19 +344,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, this);
 
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        DISTANCE_IN_KM = preferences.getBoolean("switch_dis",true);
+
+        Toast.makeText(this, ""+DISTANCE_IN_KM, Toast.LENGTH_SHORT).show();
 
         super.onResume();
     }
-
-
-
 
 
     @Override //TODO // FIXME: 5/1/2017
     public void onBackPressed() {
 
         int count = getFragmentManager().getBackStackEntryCount();
-        if(count ==0)
+        if (count == 0)
             super.onBackPressed();
             //additional code
         else {
@@ -354,4 +366,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     }
 
+
+     static class myPlugInReceiver extends BroadcastReceiver
+    {
+        public myPlugInReceiver(){
+        }
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Toast.makeText(context, "Device Power Connected", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 }
+
+

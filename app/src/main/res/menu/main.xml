@@ -5,6 +5,9 @@
     xmlns:adnroid="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/settings_preference"
+        android:title="Settings" />
+    <item
         android:id="@+id/search_bar"
         android:title="Search"
         android:icon="@drawable/ic_search_black_24dp"
@@ -16,11 +19,11 @@
         android:title="Current Location"
         app:showAsAction="always"
         app:actionLayout="@layout/use_toggle"/>
-
     <item
         android:id="@+id/fav"
         android:checkable="true"
         android:icon="@drawable/ic_grade_black_24dp"
         android:title="Favorites"
         app:showAsAction="always" />
+
 </menu>

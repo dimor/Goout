@@ -16,13 +16,18 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
 
-        String queryCreateTable = "CREATE TABLE favorites(_id INTEGER PRIMARY KEY AUTOINCREMENT , name TEXT , address TEXT , imageString TEXT ,lat TEXT, lng TEXT)";
-        db.execSQL(queryCreateTable);
+        String queryCreateTableFav = "CREATE TABLE favorites(_id INTEGER PRIMARY KEY AUTOINCREMENT , name TEXT , address TEXT , imageString TEXT ,lat TEXT, lng TEXT)";
+        db.execSQL(queryCreateTableFav);
 
+        String queryCreateTableHistory = "CREATE TABLE history(_id INTEGER PRIMARY KEY AUTOINCREMENT , name TEXT , address TEXT , imageString TEXT ,lat TEXT, lng TEXT)";
+        db.execSQL(queryCreateTableHistory);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
     }
+
+
+
 }

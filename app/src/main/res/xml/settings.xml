@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:disableDependentsState="false"
+        android:key="switch_dis"
+        android:persistent="false"
+        android:switchTextOff="MILES"
+        android:switchTextOn="KM"
+        android:title="Switch to Miles/Km" />
+
+
+
+    <Preference
+        android:key="del_fav"
+        android:title="Delete all Favorites" />
+</PreferenceScreen>

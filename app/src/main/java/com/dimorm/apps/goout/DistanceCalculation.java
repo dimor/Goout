@@ -1,10 +1,15 @@
 package com.dimorm.apps.goout;
 
+import android.content.SharedPreferences;
+
 /**
  * Created by Dima on 4/22/2017.
  */
 
 public class DistanceCalculation {
+
+
+
 
     public static double distance(double lat1, double lng1, double lat2, double lng2) {
         int r = 6371; // average radius of the earth in km
@@ -15,7 +20,12 @@ public class DistanceCalculation {
                         * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double d = r * c;
-        return d;
+        if(MainActivity.DISTANCE_IN_KM){
+            return  d;
+        }
+        else{
+            return (d/1.61);
+        }
     }
 
 }

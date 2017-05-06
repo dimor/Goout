@@ -20,6 +20,8 @@ public class FavFragment extends Fragment {
     RecyclerView recyclerView;
     Cursor cursor;
     double lat,lng;
+    DataFromCursorAdapter adapter;
+    DatabaseSQL databaseSQL;
     public FavFragment() {
         // Required empty public constructor
     }
@@ -33,7 +35,7 @@ public class FavFragment extends Fragment {
         View view =  inflater.inflate(R.layout.fav_fragment, container, false);
         Bundle data =getArguments();
         lat =data.getDouble("lat");
-      lng =  data.getDouble("lng");
+        lng =  data.getDouble("lng");
         recyclerView =(RecyclerView) view.findViewById(R.id.RecycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
@@ -62,11 +64,12 @@ public class FavFragment extends Fragment {
 
             @Override
             protected void onPostExecute(String s) {
-                FavoritesAdapter favoritesAdapter = new FavoritesAdapter(cursor,getActivity(),lat,lng);
-                recyclerView.setAdapter(favoritesAdapter);
+                 adapter = new DataFromCursorAdapter(cursor,getActivity(),lat,lng);
+                recyclerView.setAdapter(adapter);
                 super.onPostExecute(s);
             }
         }
+
 }
 
 
