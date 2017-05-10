@@ -1,10 +1,11 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.controller.adapters;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -14,10 +15,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.dimorm.apps.goout.controller.DistanceCalculation;
+import com.dimorm.apps.goout.controller.ImageEncodeDecode;
+import com.dimorm.apps.goout.R;
+import com.dimorm.apps.goout.controller.ChangeFragment;
+import com.dimorm.apps.goout.model.DatabaseSQL;
+import com.dimorm.apps.goout.model.GsonModel.ResultsCurrentPlacesJsonModel;
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.picasso.Picasso;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 /**
@@ -28,27 +38,22 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
 
 
     ///////////////////////Variables/////////////////////////////////////
-    ArrayList<ResultsCurrentPlacesJsonModel> results;
+    private ArrayList<ResultsCurrentPlacesJsonModel> results;
+    private ArrayList stringImages;
     private double lat, lng;
-    String searchData;
-    String name;
-    String address;
-    Context context;
-    boolean currentLocation;
-    DatabaseSQL databaseSQL;
-    String pictureUrl;
-    Bitmap logoBitmap;
-    String dis;
+    private String name;
+    private String address;
+    private Context context;
+    private String dis;
 
     ////////////////////////////////////////Constractor////////////////////////////////
-    public DataFromJsonAdapter(ArrayList<ResultsCurrentPlacesJsonModel> results, double lat, double lng, Boolean currentLocation, Context context, String searchData) {
+    public DataFromJsonAdapter(ArrayList results, ArrayList stringImages, double lat, double lng, Context context) {
         this.results = results;
         this.lat = lat;
         this.lng = lng;
-        this.currentLocation = currentLocation;
+        this.stringImages = stringImages;
         this.context = context;
-         pictureUrl = null;
-        this.searchData =searchData;
+
     }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,8 +64,7 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
 
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.place_item, parent, false);
-        databaseSQL = new DatabaseSQL(context);
-        ViewHolder viewHolder = new ViewHolder(v, results, context, lat, lng ,databaseSQL);
+        ViewHolder viewHolder = new ViewHolder(v, results, context, lat, lng ,stringImages);
         return viewHolder;
     }
 /////////////////////////////////////////////////BIND VIEW HOLDER/////////////////////////////////
@@ -78,20 +82,9 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
 
 
 
-        holder.bindText(name, address, getPictureURL(position), dis);
-        if(searchData!=null)
-        holder.writeToHistory(databaseSQL,position);
+        holder.bindText(name, address, stringImages, dis);
     }
 
-
-        public String getPictureURL(int position){
-            if (results.get(position).photos == null) {
-                pictureUrl = results.get(position).reference;
-            } else
-                pictureUrl = results.get(position).photos.get(0).photo_reference;
-
-            return pictureUrl;
-        }
 //////////////////////////////////////////////////////////////GET COUNT ///////////////////////////////////////
     @Override
     public int getItemCount() {
@@ -105,23 +98,17 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
         ImageView logo = (ImageView) itemView.findViewById(R.id.ImageViewLogo);
         TextView distance = (TextView) itemView.findViewById(R.id.TextViewDistance);
         Context context;
-        DatabaseSQL databaseSQL;
-        Bitmap logoBitmap;
-        BitmapDrawable logoBitmapDrawable;
         ArrayList<ResultsCurrentPlacesJsonModel> results;
-        String imageString;
+        ArrayList stringImage;
 
             ////////////////////////////////////////////////////CONSTRUCTOR/////////////////////////////////////////////////
-        public ViewHolder(final View itemView, final ArrayList<ResultsCurrentPlacesJsonModel> results, final Context context, final double lat, final double lng, DatabaseSQL databaseSQL) {
+        public ViewHolder(final View itemView, final ArrayList<ResultsCurrentPlacesJsonModel> results, final Context context, final double lat, final double lng, ArrayList stringImage) {
             super(itemView);
             this.context = context;
             this.results = results;
-            this.databaseSQL = databaseSQL;
+            this.stringImage = stringImage;
+
             itemView.setOnCreateContextMenuListener(mOnCreateContextMenuListener);
-
-
-
-
 
       ////////////////////////////////////////////CHANGE TO MAP FRAGMNET//////////////////////////////////
             logo.setOnClickListener(new View.OnClickListener() {
@@ -137,45 +124,13 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
 
         }
 
-
-   /////////////////////////////////WRITE TO HISTORY FUNCTION//////////////////////////////
-
-        public void writeToHistory(DatabaseSQL databaseSQL, int position) {
-            ContentValues values = new ContentValues();
-            values.put("name", results.get(position).name);
-            if (results.get(position).vicinity != null)
-                values.put("address", results.get(position).vicinity);
-            else {
-                values.put("address", results.get(position).formatted_address);
-            }
-            values.put("lat", results.get(position).geometry.location.lat);
-            values.put("lng", results.get(position).geometry.location.lng);
-
-
-          //  if (logo.getDrawable() == null)
-            logo.setImageResource(R.drawable.place);
-
-            logoBitmapDrawable = (BitmapDrawable) logo.getDrawable();
-            logoBitmap = logoBitmapDrawable.getBitmap();
-
-            imageString = ImageEncodeDecode.encodeToBase64(logoBitmap, Bitmap.CompressFormat.JPEG, 100);
-
-            values.put("imageString", imageString);
-            databaseSQL.getWritableDatabase().insert("history", null, values);
-        }
-
-
-
-
         //////////////////////////BIND DATA TO VIEWS/////////////////////////////////
-                public void bindText(String name, String address, String pictureUrl, String dis) {
+                private void bindText(String name, String address, ArrayList pictureUrl, String dis) {
                     nameTV.setText(name);
                     addressTV.setText(address);
                     distance.setText(dis);
-                    Picasso.with(itemView.getContext())
-                            .load("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=" + pictureUrl + "&key=AIzaSyBSJ-6SEDmZs99TvgQcZ8mR_Eft6ao8hrY")
-                            .into(logo);
-                }
+                    logo.setImageBitmap(ImageEncodeDecode.decodeBase64(stringImage.get(getAdapterPosition()).toString()));
+}
 
         //////////////////////////////////////////////////////CONTEXT MENU//////////////////////////////////////////////////////////////
                 private final View.OnCreateContextMenuListener mOnCreateContextMenuListener = new View.OnCreateContextMenuListener() {
@@ -197,13 +152,16 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
                     if(item.getItemId()==1)
                     {
 
-                        Intent sendIntent = new Intent();
-                        sendIntent.setAction(Intent.ACTION_SEND);
-                        sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        sendIntent.putExtra(Intent.EXTRA_TEXT, "Just find out " + results.get(getAdapterPosition()).name + " you should check it");
-                        sendIntent.setType("text/plain");
-                        itemView.getContext().startActivity(Intent.createChooser(sendIntent, context.getResources().getText(R.string.Hello)));
-                        Log.d("CONTEXT", "onMenuItemClick: SHARE " + getAdapterPosition());
+                        Double latitude = results.get(getAdapterPosition()).geometry.location.lat;
+                        Double longitude = results.get(getAdapterPosition()).geometry.location.lng;
+
+
+                        String location="https://www.google.co.il/maps/@"+latitude+","+longitude+",18.79z?hl=en";
+                        Intent sharingIntent=new Intent(android.content.Intent.ACTION_SEND);
+                        sharingIntent.setType("text/plain");
+                        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "place Details");
+                        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT,location );
+                        itemView.getContext().startActivity(sharingIntent);
                     }
 
                     if(item.getItemId()==2){
@@ -227,8 +185,8 @@ public class DataFromJsonAdapter extends RecyclerView.Adapter<DataFromJsonAdapte
                         String imageString = ImageEncodeDecode.encodeToBase64(bitmap, Bitmap.CompressFormat.JPEG,100);
 
                         values.put("imageString",imageString);
-                        databaseSQL.getWritableDatabase().insert("favorites",null ,values);
-
+                        DatabaseSQL.getDatabaseInstance(context).getWritableDatabase().insert("favorites",null ,values);
+                        Toast.makeText(context,results.get(getAdapterPosition()).name + " successfully added to favorites" , Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 }

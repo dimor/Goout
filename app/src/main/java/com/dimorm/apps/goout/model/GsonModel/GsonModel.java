@@ -1,4 +1,4 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.model.GsonModel;
 
 
 import java.util.ArrayList;
@@ -10,6 +10,6 @@ import java.util.ArrayList;
  public class GsonModel {
 
     String status;
-    ArrayList <ResultsCurrentPlacesJsonModel> results;
+    public  ArrayList <ResultsCurrentPlacesJsonModel> results;
 
 }

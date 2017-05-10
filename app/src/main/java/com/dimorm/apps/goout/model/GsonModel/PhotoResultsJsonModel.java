@@ -1,4 +1,4 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.model.GsonModel;
 
 /**
  * Created by Dima on 4/21/2017.
@@ -6,5 +6,5 @@ package com.dimorm.apps.goout;
 
 public class PhotoResultsJsonModel {
 
-    String photo_reference;
+    public String photo_reference;
 }

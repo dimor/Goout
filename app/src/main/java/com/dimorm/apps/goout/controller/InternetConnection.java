@@ -1,15 +1,9 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.controller;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.widget.Toast;
-
-/**
- * 
- * @author Pratik Butani
- * 
- */
 public class InternetConnection {
 
     /** CHECK WHETHER INTERNET CONNECTION IS AVAILABLE OR NOT */
@@ -19,7 +13,6 @@ public class InternetConnection {
         NetworkInfo activeNetworkInfo = connMgr.getActiveNetworkInfo();
 
         if (activeNetworkInfo != null) { // connected to the internet
-            Toast.makeText(context, activeNetworkInfo.getTypeName(), Toast.LENGTH_SHORT).show();
 
             if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                 // connected to wifi

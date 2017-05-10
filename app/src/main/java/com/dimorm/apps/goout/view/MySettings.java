@@ -1,13 +1,14 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.view;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.annotation.Nullable;
 import android.widget.Toast;
+
+import com.dimorm.apps.goout.R;
+import com.dimorm.apps.goout.model.DatabaseSQL;
 
 /**
  * Created by Dima on 5/5/2017.

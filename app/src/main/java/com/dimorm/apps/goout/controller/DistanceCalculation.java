@@ -1,6 +1,9 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.controller;
 
-import android.content.SharedPreferences;
+import com.dimorm.apps.goout.view.MainActivity;
+
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 
 /**
  * Created by Dima on 4/22/2017.
@@ -11,7 +14,7 @@ public class DistanceCalculation {
 
 
 
-    public static double distance(double lat1, double lng1, double lat2, double lng2) {
+    public static String distance(double lat1, double lng1, double lat2, double lng2) {
         int r = 6371; // average radius of the earth in km
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lng2 - lng1);
@@ -20,11 +23,16 @@ public class DistanceCalculation {
                         * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double d = r * c;
+
+        DecimalFormat df = new DecimalFormat("#.#");
+        df.setRoundingMode(RoundingMode.CEILING);
+
         if(MainActivity.DISTANCE_IN_KM){
-            return  d;
+            return  df.format(d) + " Km";
         }
         else{
-            return (d/1.61);
+            d= d/1.61;
+            return df.format(d) + " Miles";
         }
     }
 

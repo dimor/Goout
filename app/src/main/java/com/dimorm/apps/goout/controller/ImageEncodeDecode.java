@@ -1,4 +1,4 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.controller;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

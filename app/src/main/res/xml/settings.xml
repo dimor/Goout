@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <SwitchPreference
-        android:disableDependentsState="false"
+        android:defaultValue="true"
+        android:icon="@drawable/ic_my_location_black_24dp"
         android:key="switch_dis"
-        android:persistent="false"
+        android:shouldDisableView="false"
+        android:showText="true"
+        android:singleLine="false"
+        android:splitTrack="true"
         android:switchTextOff="MILES"
         android:switchTextOn="KM"
         android:title="Switch to Miles/Km" />
-
-
-
     <Preference
+        android:icon="@drawable/ic_delete_black_24dp"
         android:key="del_fav"
         android:title="Delete all Favorites" />
 </PreferenceScreen>

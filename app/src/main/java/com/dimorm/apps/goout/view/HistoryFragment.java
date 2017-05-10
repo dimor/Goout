@@ -1,6 +1,7 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.view;
 
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.AsyncTask;
@@ -11,6 +12,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.dimorm.apps.goout.controller.adapters.DataFromCursorAdapter;
+import com.dimorm.apps.goout.model.DatabaseSQL;
+import com.dimorm.apps.goout.R;
 
 
 /**
@@ -32,20 +37,36 @@ public class HistoryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_history, container, false);
-        databaseSQL = new DatabaseSQL(getActivity());
+        buildAlertMessageNoInternet();
         Bundle data = getArguments();
-         lat =  data.getDouble("lat");
-          lng = data.getDouble("lng");
-
+        lat =  data.getDouble("lat");
+        lng = data.getDouble("lng");
         HistoryRV = (RecyclerView) view.findViewById(R.id.HistoryRV);
         HistoryRV.setLayoutManager(new LinearLayoutManager(getActivity()));
         LoadCursorHistory thread = new LoadCursorHistory();
-        thread.execute(databaseSQL);
-
-
+        thread.execute(DatabaseSQL.getDatabaseInstance(getActivity()));
         // Inflate the layout for this fragment
         return view;
     }
+
+    //////////////////////////////////////ALERT DIALOG NO INTERNET CONNECTION///////////////////////////////////////////////////////////
+    private void buildAlertMessageNoInternet() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("No Internet Connection");
+        builder.setMessage("Internet Connection Not Found\nIn Offline Mode You Can See Your Last Search Result")
+                .setCancelable(true);
+        final AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
+
+
+
+
+
+
+
 
     class LoadCursorHistory extends AsyncTask<DatabaseSQL,String,Cursor> {
 
@@ -61,6 +82,7 @@ public class HistoryFragment extends Fragment {
             DataFromCursorAdapter dataFromCursorAdapter = new DataFromCursorAdapter(cursor,context,lat,lng);
             HistoryRV.setAdapter(dataFromCursorAdapter);
         }
+
     }
 
 }

@@ -1,4 +1,4 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.model;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -9,6 +9,10 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 
 public class DatabaseSQL extends SQLiteOpenHelper {
+
+    private static DatabaseSQL databaseInstance = null;
+
+
     public DatabaseSQL(Context context) {
         super(context, "data.db", null, 1);
     }
@@ -28,6 +32,11 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     }
 
-
-
+    public static DatabaseSQL getDatabaseInstance (Context context){
+        if(databaseInstance == null)
+        {
+            databaseInstance = new DatabaseSQL(context);
+        }
+        return databaseInstance;
+    }
 }

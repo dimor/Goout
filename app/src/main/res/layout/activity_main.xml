@@ -5,8 +5,7 @@
     android:id="@+id/mainContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.dimorm.apps.goout.MainActivity">
-
+    tools:context="com.dimorm.apps.goout.view.MainActivity">
 
     <LinearLayout
         android:id="@+id/LinearContainer"

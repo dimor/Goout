@@ -2,10 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/darker_gray"
-    tools:context="com.dimorm.apps.goout.Request_Result_Fragmnet">
+    android:background="#f5f5f5"
+    tools:context="com.dimorm.apps.goout.view.Request_Result_Fragmnet">
 
     <!-- TODO: Update blank fragment layout -->
+
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/RecycleViewList"

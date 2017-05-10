@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
 
-
-    xmlns:adnroid="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/settings_preference"
         android:title="Settings" />
     <item
         android:id="@+id/search_bar"
-        android:title="Search"
+        android:enabled="true"
         android:icon="@drawable/ic_search_black_24dp"
+        android:title="Search"
+        android:visible="true"
         app:actionViewClass="android.widget.SearchView"
-        app:showAsAction="always"
-        ></item>
+        app:showAsAction="always"></item>
     <item
         android:id="@+id/currentLocationSwitch"
         android:title="Current Location"

@@ -1,4 +1,4 @@
-package com.dimorm.apps.goout;
+package com.dimorm.apps.goout.view;
 
 
 import android.database.Cursor;
@@ -10,6 +10,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.dimorm.apps.goout.controller.adapters.DataFromCursorAdapter;
+import com.dimorm.apps.goout.model.DatabaseSQL;
+import com.dimorm.apps.goout.R;
 
 
 /**
@@ -39,7 +43,7 @@ public class FavFragment extends Fragment {
         recyclerView =(RecyclerView) view.findViewById(R.id.RecycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        DatabaseSQL databaseSQL = new DatabaseSQL(getActivity());
+        databaseSQL = DatabaseSQL.getDatabaseInstance(getActivity());
 
         AsyncTaskCursorLoader asyncTaskCursorLoader = new AsyncTaskCursorLoader();
         asyncTaskCursorLoader.execute(databaseSQL);
@@ -50,11 +54,6 @@ public class FavFragment extends Fragment {
     }
 
         class AsyncTaskCursorLoader extends AsyncTask<DatabaseSQL, String, String> {
-
-                Cursor cursor;
-                DatabaseSQL databaseSQL;
-
-
             @Override
             protected String doInBackground(DatabaseSQL... params) {
                 cursor =params[0].getReadableDatabase().query("favorites",null,null,null,null,null,null);
@@ -64,7 +63,8 @@ public class FavFragment extends Fragment {
 
             @Override
             protected void onPostExecute(String s) {
-                 adapter = new DataFromCursorAdapter(cursor,getActivity(),lat,lng);
+                boolean comesFromFav = true;
+                adapter = new DataFromCursorAdapter(cursor,getActivity(),lat,lng);
                 recyclerView.setAdapter(adapter);
                 super.onPostExecute(s);
             }
