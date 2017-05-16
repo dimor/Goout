@@ -53,7 +53,16 @@ public class FavFragment extends Fragment {
         return view;
     }
 
-        class AsyncTaskCursorLoader extends AsyncTask<DatabaseSQL, String, String> {
+    @Override
+    public void onResume() {
+
+        AsyncTaskCursorLoader asyncTaskCursorLoader = new AsyncTaskCursorLoader();
+        asyncTaskCursorLoader.execute(databaseSQL);
+
+        super.onResume();
+    }
+
+    class AsyncTaskCursorLoader extends AsyncTask<DatabaseSQL, String, String> {
             @Override
             protected String doInBackground(DatabaseSQL... params) {
                 cursor =params[0].getReadableDatabase().query("favorites",null,null,null,null,null,null);
@@ -63,7 +72,6 @@ public class FavFragment extends Fragment {
 
             @Override
             protected void onPostExecute(String s) {
-                boolean comesFromFav = true;
                 adapter = new DataFromCursorAdapter(cursor,getActivity(),lat,lng);
                 recyclerView.setAdapter(adapter);
                 super.onPostExecute(s);

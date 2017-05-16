@@ -1,10 +1,13 @@
-package com.dimorm.apps.goout.view;
+package com.dimorm.apps.goout.controller;
 
 import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -45,27 +48,44 @@ public class MyIntentService extends IntentService {
         String url;
         String JsonString = null;
         Bitmap bitmap = null;
-        ArrayList gsonArray;
+        ArrayList <ResultsCurrentPlacesJsonModel> gsonArray ;
         String photoString;
         ArrayList stringImages = new ArrayList();
 
-        if (autoSearch){
-            url ="https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=2000&key=AIzaSyCWZQEyD2UDp46H2qQHbfVec38kMK-dJ-k";
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        searchText = preferences.getString("search",null);
+        if(searchText == null){
+            searchText = "Pizza in Berlin";
         }
+
+        if (autoSearch) {
+
+            if(lat>0 & lng>0){
+                url ="https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=3000&keyword="+searchText+"&key=AIzaSyCaJtf9y-WjL9G7MEsD2DwpuTnHL7Ev2ss";
+            }
+            else {
+
+                url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=" + searchText + "&radius=3000&key=AIzaSyCaJtf9y-WjL9G7MEsD2DwpuTnHL7Ev2ss";
+            }
+        }
+
         else{
             if (currentLocationToggle)
-                url ="https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=2000&keyword="+searchText+"&key=AIzaSyCWZQEyD2UDp46H2qQHbfVec38kMK-dJ-k";
+                url ="https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius=3000&keyword="+searchText+"&key=AIzaSyCaJtf9y-WjL9G7MEsD2DwpuTnHL7Ev2ss";
             else
-               url ="https://maps.googleapis.com/maps/api/place/textsearch/json?query="+searchText+"&radius=2000&key=AIzaSyCWZQEyD2UDp46H2qQHbfVec38kMK-dJ-k";
+               url ="https://maps.googleapis.com/maps/api/place/textsearch/json?query="+searchText+"&radius=3000&key=AIzaSyCaJtf9y-WjL9G7MEsD2DwpuTnHL7Ev2ss";
         }
 
 
         OkHttpNetCall okHttpNetCall = new OkHttpNetCall();
         try {
             JsonString = okHttpNetCall.run(url);
+            Log.d("JSON STRING",JsonString);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
 
         gsonModel = gson.fromJson(JsonString, GsonModel.class);
         gsonArray  =  gsonModel.results;
@@ -81,7 +101,7 @@ public class MyIntentService extends IntentService {
                 }
                 else {
                     photoReference = gsonModel.results.get(i).photos.get(0).photo_reference;
-                    pictureUrl ="https://maps.googleapis.com/maps/api/place/photo?maxwidth=300&photoreference=" + photoReference + "&key=AIzaSyCWZQEyD2UDp46H2qQHbfVec38kMK-dJ-k";
+                    pictureUrl ="https://maps.googleapis.com/maps/api/place/photo?maxwidth=300&photoreference=" + photoReference + "&key=AIzaSyCaJtf9y-WjL9G7MEsD2DwpuTnHL7Ev2ss";
                 }
 
             }catch (NullPointerException e){
@@ -94,7 +114,7 @@ public class MyIntentService extends IntentService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-           photoString = ImageEncodeDecode.encodeToBase64(bitmap, Bitmap.CompressFormat.JPEG,100);
+           photoString = ImageEncodeDecode.encodeToBase64(bitmap, Bitmap.CompressFormat.JPEG,80);
             stringImages.add(photoString);
 
             ContentValues values = new ContentValues();
@@ -110,7 +130,6 @@ public class MyIntentService extends IntentService {
 
             DatabaseSQL.getDatabaseInstance(this).getWritableDatabase().insert("history", null, values);
         }
-
         Intent intentDownloadJson = new Intent("com.dimorm.apps.goout.broadcastSearch");
         intentDownloadJson.putExtra("lat",lat);
         intentDownloadJson.putExtra("lng",lng);

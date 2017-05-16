@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -26,7 +27,6 @@ public class HistoryFragment extends Fragment {
     double lat ,lng;
   public Cursor cursor;
     Context context;
-    DatabaseSQL databaseSQL;
     RecyclerView HistoryRV;
     public HistoryFragment() {
         // Required empty public constructor
@@ -37,7 +37,6 @@ public class HistoryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_history, container, false);
-        buildAlertMessageNoInternet();
         Bundle data = getArguments();
         lat =  data.getDouble("lat");
         lng = data.getDouble("lng");
@@ -48,24 +47,6 @@ public class HistoryFragment extends Fragment {
         // Inflate the layout for this fragment
         return view;
     }
-
-    //////////////////////////////////////ALERT DIALOG NO INTERNET CONNECTION///////////////////////////////////////////////////////////
-    private void buildAlertMessageNoInternet() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("No Internet Connection");
-        builder.setMessage("Internet Connection Not Found\nIn Offline Mode You Can See Your Last Search Result")
-                .setCancelable(true);
-        final AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-
-
-
-
-
-
-
 
 
     class LoadCursorHistory extends AsyncTask<DatabaseSQL,String,Cursor> {
